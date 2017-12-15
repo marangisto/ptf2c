@@ -28,3 +28,13 @@ Quoting from appendix F:
     ;180000FFEEDDCCBBAA0099887766554433221122334455667788990AFC
     ;0000010001
 
+This is one of the possible output formats used by the win2c64 assembler:
+
+    http://www.aartbik.com/MISC/c64.html
+
+For example:
+
+    win2c64 -P prog.s
+
+This generates prog.ptf that may in turn be consumed by ptf2c.
+
