@@ -27,11 +27,12 @@ loadPaperTape fn = do
 processLine :: Int -> String -> Either Int (Int, [Byte])
 processLine i s
     | (';':'0':'0':c3:c2:c1:c0:xs) <- s = Left $ hex2int [c3,c2,c1,c0] -- ignoring checksum on count (hex2int xs)
-    | (';':lh:ll:a3:a2:a1:a0:xs) <- s = Right $ processRecord i (hex2int [lh,ll]) (hex2int [a3,a2,a1,a0]) xs
+    | (';':lh:ll:a3:a2:a1:a0:xs) <- s = Right $ let cksum = hex2int [lh,ll] + hex2int [a3,a2] + hex2int [a1,a0]
+                                                 in processRecord i (hex2int [lh,ll]) (hex2int [a3,a2,a1,a0]) cksum xs
     | otherwise = error $ "bad input line: '" ++ s ++ "'"
 
-processRecord :: Int -> Int -> Int -> String -> (Int, [Byte])
-processRecord i l a xs = (a, processBytes i (hex2int (drop (l*2) xs) - l - a) (take (l*2) xs))
+processRecord :: Int -> Int -> Int -> Int -> String -> (Int, [Byte])
+processRecord i l a cksum xs = (a, processBytes i (hex2int (drop (l*2) xs) - cksum) (take (l*2) xs))
 
 processBytes :: Int -> Int -> String -> [Byte]
 processBytes i cksum xs
