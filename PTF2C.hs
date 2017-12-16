@@ -41,20 +41,15 @@ processBytes i cksum xs
     where bs = map hex2int $ chunksOf 2 xs
           cksum' = sum bs
 
-hex2int :: String -> Int
-hex2int = read . ("0x"++)
-
-int2hex :: Int -> String
-int2hex = ("0x"++) . (`showHex` "")
-
 formatHeader :: String -> [(Int, [Byte])] -> [String]
 formatHeader progname xs@((start,_):_) =
     [ "#pragma once"
     , ""
-    , "const unsigned " ++ progname ++ "_start = " ++ int2hex start ++ ";"
-    , "const unsigned " ++ progname ++ "_size = " ++ int2hex size ++ ";"
+    , "struct record { unsigned addr; unsigned size; unsigned char data[24]; };"
     , ""
-    , "extern const unsigned char " ++ progname ++ "_text[];"
+    , "const unsigned " ++ progname ++ "_num_records = " ++ int2hex (length xs) ++ ";"
+    , ""
+    , "extern const struct record " ++ progname ++ "_records[];"
     , ""
     ] 
     where size = sum $ map (length . snd) xs
@@ -63,10 +58,19 @@ formatOutput :: String -> [(Int, [Byte])] -> [String]
 formatOutput progname xs@((start,_):_) =
     [ "#include \"" ++ progname ++ ".h\""
     , ""
-    , "const unsigned char " ++ progname ++ "_text[] ="
+    , "const struct record " ++ progname ++ "_records[] = "
     ]  ++
-    [ "    " ++ (if i > 0 then ", " else "{ ") ++ intercalate ", " (map int2hex bs)
+    [ "    " ++ (if i > 0 then ", " else "{ ") ++ record a bs
     | (i, (a, bs)) <- zip [0..] xs
     ] ++
     [ "    };" ]
+
+record :: Int -> [Byte] -> String
+record a bs = "{ " ++ int2hex a ++ ", " ++ int2hex (length bs) ++ ", { " ++ intercalate ", " (map int2hex bs) ++ " } }"
+
+hex2int :: String -> Int
+hex2int = read . ("0x"++)
+
+int2hex :: Int -> String
+int2hex = ("0x"++) . (`showHex` "")
 
